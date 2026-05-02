@@ -1,0 +1,25 @@
+# 立信小狐 运营周报
+
+## 敏感文件
+secrets/
+*.json
+!package.json
+
+## 截图
+screenshots/
+
+## macOS
+.DS_Store
+.AppleDouble
+
+## Python
+__pycache__/
+*.pyc
+.venv/
+
+## Playwright MCP
+.playwright-mcp/
+
+## 临时文件
+*.tmp
+/tmp/
