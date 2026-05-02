@@ -1,6 +1,8 @@
 """
 立信小狐 运营周报生成器
-用法: python weekly_report.py
+用法:
+  python weekly_report.py           仅生成本地周报
+  python weekly_report.py --push    生成周报 + 自动推送到 GitHub Pages
 每周二自动运行，整合小红书数据 + 微信数据 + 竞品对比，生成完整周报
 """
 import asyncio
@@ -648,6 +650,20 @@ async def main():
     print(f"  ✅ HTML:     {html_path}")
     print(f"  ✅ 最新:     {latest_html}")
     print(f"  ✅ GitHub Pages: {docs_index}")
+
+    # ─── 自动推送 ───
+    if "--push" in sys.argv:
+        print("\n🚀 推送到 GitHub Pages...")
+        import subprocess
+        try:
+            subprocess.run(["git", "add", "docs/index.html",
+                            "运营数据/周报/"], check=True)
+            subprocess.run(["git", "commit", "-m",
+                            f"📋 周报更新 {now.strftime('%Y%m%d')}"], check=True)
+            subprocess.run(["git", "push", "origin", "main"], check=True)
+            print(f"  ✅ 已推送！访问 https://lan233398.github.io/lixin-weekly-report/")
+        except subprocess.CalledProcessError as e:
+            print(f"  ⚠️ 推送失败: {e}（可手动 git push）")
 
 
 if __name__ == "__main__":
