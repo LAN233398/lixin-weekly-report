@@ -93,6 +93,24 @@
 - **`xhs_tools/xhs_competitors.py`**：批量抓取竞品账号数据，对比分析
 - **注意**：小红书 API 有严格反爬，直接 HTTP 请求会被封。数据抓取只能通过 Playwright 浏览器 + 拦截 API 响应实现。Cookie 过期后需重新扫码
 
+### 运营周报系统
+- **`weekly_report.py`**：一键生成周报（整合小红书 + 微信 + 竞品数据），输出 Markdown + HTML 双格式
+  - `python weekly_report.py` — 生成本地报告
+  - `python weekly_report.py --push` — 生成报告 + 自动推送到 GitHub Pages
+- **`html_report.py`**：HTML 周报模板引擎（KPI 仪表盘 + Chart.js 图表 + AI 策略分析）
+- **周报公网地址**：**https://lan233398.github.io/lixin-weekly-report/**（固定不变，每周覆盖更新）
+- **GitHub 仓库**：https://github.com/LAN233398/lixin-weekly-report
+- **自动更新**：
+  - macOS launchd：每周二中午 12:00 系统级执行 `python weekly_report.py --push`（永不失效）
+  - Claude Code Cron：每周二 11:57 AI 辅助提醒（7 天过期，需定期重建）
+- **Logo**：`/Users/lanyijun/Pictures/work picture/小狐logo.jpg`（替换此文件即可换 Logo）
+- **报告输出位置**：
+  - `运营数据/周报/周报_YYYYMMDD.md` — Markdown 存档
+  - `运营数据/周报/周报_YYYYMMDD.html` — HTML 存档
+  - `运营数据/周报/最新周报.html` — 快捷入口
+  - `docs/index.html` — GitHub Pages 入口（自动部署）
+- **微信数据**：需手动在 `运营数据/数据记录.csv` 中按日填写（日期、好友总数、新增好友、朋友圈条数、主要内容类型、互动评价、备注），否则周报微信部分留空
+
 ## 可用 MCP 工具
 
 ### Playwright（浏览器自动化）
