@@ -4,6 +4,7 @@
 每周二自动运行，整合小红书数据 + 微信数据 + 竞品对比，生成完整周报
 """
 import asyncio
+import base64
 import json
 import csv
 import sys
@@ -608,10 +609,20 @@ async def main():
         "[ ] 关注竞品「上海立信-小狐」本周新发内容",
     ]
 
+    # 读取 Logo 图片
+    logo_base64 = ""
+    logo_path = Path("/Users/lanyijun/Pictures/work picture/小狐logo.jpg")
+    if logo_path.exists():
+        logo_base64 = "data:image/jpeg;base64," + base64.b64encode(
+            logo_path.read_bytes()
+        ).decode()
+        print(f"  🖼️ Logo 已加载: {logo_path.name}")
+
     html = generate_html_report(
         week_start=monday.strftime("%m/%d"),
         week_end=sunday.strftime("%m/%d"),
         generated_at=now.strftime("%Y年%m月%d日 %H:%M"),
+        logo_base64=logo_base64,
         kpi=kpi,
         top_notes=top_notes,
         like_dist=like_dist,

@@ -22,6 +22,8 @@ def generate_html_report(
     # 微信数据
     wechat_rows: list,
     wechat_empty: bool = True,
+    # Logo: data URI 字符串，如 "data:image/jpeg;base64,..."
+    logo_base64: str = "",
     # AI 诊断: [str, ...]
     insights: list = None,
     # 策略建议: [str, ...]
@@ -169,12 +171,36 @@ body {{
 .header {{
   background: var(--gradient);
   color: white;
-  padding: 36px 32px 28px;
+  padding: 32px 32px 24px;
   text-align: center;
 }}
-.header h1 {{ font-size: 28px; font-weight: 700; margin-bottom: 6px; }}
-.header .subtitle {{ opacity: 0.85; font-size: 14px; }}
-.header .generated {{ opacity: 0.6; font-size: 12px; margin-top: 4px; }}
+.header-inner {{
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  max-width: 600px;
+  margin: 0 auto;
+}}
+.logo {{
+  width: 64px;
+  height: 64px;
+  border-radius: 16px;
+  object-fit: cover;
+  background: white;
+  padding: 3px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+  flex-shrink: 0;
+}}
+.header-text {{ text-align: left; }}
+.header-text h1 {{ font-size: 24px; font-weight: 700; margin-bottom: 2px; }}
+.header-text .subtitle {{ opacity: 0.85; font-size: 13px; }}
+.header-text .generated {{ opacity: 0.6; font-size: 11px; margin-top: 2px; }}
+@media (max-width: 480px) {{
+  .header-inner {{ flex-direction: column; gap: 10px; }}
+  .header-text {{ text-align: center; }}
+  .logo {{ width: 48px; height: 48px; border-radius: 12px; }}
+}}
 
 /* ── Container ── */
 .container {{ max-width: 960px; margin: 0 auto; padding: 24px 20px 48px; }}
@@ -317,9 +343,14 @@ td.likes {{ font-weight: 600; white-space: nowrap; }}
 <body>
 
 <div class="header">
-    <h1>🦊 立信小狐 · 运营周报</h1>
-    <div class="subtitle">📅 {week_start}（周一）— {week_end}（周日）</div>
-    <div class="generated">生成时间：{generated_at}（北京时间）</div>
+    <div class="header-inner">
+        <img class="logo" src="{logo_base64 or ''}" alt="小狐" onerror="this.style.display='none'">
+        <div class="header-text">
+            <h1>立信小狐 · 运营周报</h1>
+            <div class="subtitle">📅 {week_start}（周一）— {week_end}（周日）</div>
+            <div class="generated">生成时间：{generated_at}（北京时间）</div>
+        </div>
+    </div>
 </div>
 
 <div class="container">
