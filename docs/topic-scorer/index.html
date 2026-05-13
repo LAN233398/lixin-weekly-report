@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>选题评分工具 - 立信小狐</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;background:#f5f5f7;color:#1d1d1f;line-height:1.5}
+.header{background:linear-gradient(135deg,#ff6b6b,#ff8e8e);color:#fff;padding:16px 20px;text-align:center;position:sticky;top:0;z-index:100}
+.header h1{font-size:20px;font-weight:600}
+.header .sub{font-size:12px;opacity:.85;margin-top:2px}
+.tab-bar{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid #e5e5ea;display:flex;z-index:100;padding-bottom:env(safe-area-inset-bottom)}
+.tab-bar .tab{flex:1;text-align:center;padding:8px 0 6px;font-size:11px;color:#8e8e93;cursor:pointer;transition:.2s}
+.tab-bar .tab.active{color:#ff6b6b}
+.tab-bar .tab .icon{font-size:20px;display:block;margin-bottom:1px}
+.content{padding:16px;padding-bottom:80px;max-width:640px;margin:0 auto}
+.panel{display:none}.panel.active{display:block}
+.card{background:#fff;border-radius:12px;padding:16px;margin-bottom:12px;box-shadow:0 1px 3px rgba(0,0,0,.06)}
+.card-title{font-size:15px;font-weight:600;margin-bottom:12px}
+.form-group{margin-bottom:14px}
+.form-group label{display:block;font-size:13px;color:#8e8e93;margin-bottom:6px}
+.form-group input{width:100%;padding:10px 12px;border:1px solid #d1d1d6;border-radius:8px;font-size:15px;outline:none;transition:.2s}
+.form-group input:focus{border-color:#ff6b6b;box-shadow:0 0 0 3px rgba(255,107,107,.15)}
+.score-row{display:flex;align-items:center;margin-bottom:10px;gap:8px}
+.score-row .label{flex:1;font-size:14px}
+.score-row .label small{display:block;font-size:11px;color:#8e8e93}
+.score-btns{display:flex;gap:6px}
+.score-btns .btn{width:36px;height:36px;border-radius:50%;border:2px solid #d1d1d6;background:#fff;font-size:15px;font-weight:600;cursor:pointer;transition:.2s;display:flex;align-items:center;justify-content:center}
+.score-btns .btn.selected{border-color:#ff6b6b;background:#ff6b6b;color:#fff}
+.platform-btns{display:flex;gap:8px}
+.platform-btns .btn{flex:1;padding:10px 0;border:2px solid #d1d1d6;border-radius:8px;background:#fff;font-size:14px;cursor:pointer;text-align:center;transition:.2s}
+.platform-btns .btn.selected{border-color:#ff6b6b;background:#fff5f5;color:#ff6b6b}
+.tag-btns{display:flex;flex-wrap:wrap;gap:8px}
+.tag-btns .btn{padding:6px 14px;border:1.5px solid #d1d1d6;border-radius:20px;background:#fff;font-size:13px;cursor:pointer;transition:.2s}
+.tag-btns .btn.selected{border-color:#ff6b6b;background:#ff6b6b;color:#fff}
+.btn-primary{width:100%;padding:12px;background:#ff6b6b;color:#fff;border:none;border-radius:10px;font-size:16px;font-weight:600;cursor:pointer;transition:.2s}
+.btn-primary:active{background:#e55a5a;transform:scale(.98)}
+.btn-secondary{background:#f5f5f7;color:#1d1d1f}
+.topic-item{background:#fff;border-radius:10px;padding:14px;margin-bottom:10px;box-shadow:0 1px 3px rgba(0,0,0,.05)}
+.topic-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px}
+.topic-name{font-size:15px;font-weight:600;flex:1}
+.topic-score{font-size:24px;font-weight:700;margin-left:12px}
+.topic-score.s-priority{color:#34c759}
+.topic-score.s-worth{color:#ff9500}
+.topic-score.s-skip{color:#ff3b30}
+.topic-meta{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px}
+.badge{padding:2px 8px;border-radius:12px;font-size:11px;font-weight:500}
+.badge-platform{background:#e8f4fd;color:#007aff}
+.badge-tag{background:#fff3e0;color:#ff9500}
+.badge-suggestion{background:#e8faf0;color:#34c759}
+.badge-suggestion.worth{background:#fff8e1;color:#ff9500}
+.badge-suggestion.skip{background:#ffebee;color:#ff3b30}
+.topic-dims{display:flex;gap:12px;font-size:12px;color:#8e8e93}
+.topic-actions{display:flex;gap:8px;margin-top:10px;padding-top:10px;border-top:1px solid #f0f0f0}
+.topic-actions .btn{flex:1;padding:7px 0;font-size:13px;border:1px solid #d1d1d6;border-radius:8px;background:#fff;cursor:pointer;text-align:center}
+.filter-bar{display:flex;gap:8px;margin-bottom:14px;overflow-x:auto;padding-bottom:4px;-webkit-overflow-scrolling:touch}
+.filter-bar .chip{padding:6px 14px;border-radius:20px;font-size:13px;white-space:nowrap;border:1.5px solid #d1d1d6;background:#fff;cursor:pointer;transition:.2s;flex-shrink:0}
+.filter-bar .chip.active{border-color:#ff6b6b;background:#ff6b6b;color:#fff}
+.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.stat-box{background:#fff;border-radius:10px;padding:14px;text-align:center;box-shadow:0 1px 3px rgba(0,0,0,.05)}
+.stat-num{font-size:28px;font-weight:700}
+.stat-label{font-size:12px;color:#8e8e93;margin-top:2px}
+.stat-bar{display:flex;align-items:center;margin-bottom:8px;gap:8px}
+.stat-bar .name{font-size:13px;width:56px;text-align:right}
+.stat-bar .bar-wrap{flex:1;height:20px;background:#f0f0f0;border-radius:10px;overflow:hidden}
+.stat-bar .bar-fill{height:100%;border-radius:10px;transition:.3s}
+.stat-bar .val{font-size:13px;font-weight:600;width:30px}
+.grade-bar{display:flex;margin:12px 0;border-radius:8px;overflow:hidden;height:28px}
+.grade-bar div{display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;color:#fff;min-width:30px}
+.empty{text-align:center;padding:40px 20px;color:#8e8e93}
+.empty .icon{font-size:48px;margin-bottom:12px}
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:200;align-items:flex-end;justify-content:center}
+.modal-overlay.show{display:flex}
+.modal{background:#fff;border-radius:16px 16px 0 0;width:100%;max-width:640px;max-height:85vh;overflow-y:auto;padding:20px;padding-bottom:calc(20px + env(safe-area-inset-bottom));animation:slideUp .3s;position:relative}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.modal-title{font-size:17px;font-weight:600;text-align:center;margin-bottom:16px}
+.modal-close{position:absolute;right:16px;top:16px;font-size:22px;color:#8e8e93;cursor:pointer}
+.toast{position:fixed;top:70px;left:50%;transform:translateX(-50%);background:#1d1d1f;color:#fff;padding:10px 20px;border-radius:10px;font-size:14px;z-index:300;opacity:0;transition:.3s;pointer-events:none}
+.toast.show{opacity:1}
+.batch-input{width:100%;padding:10px 12px;border:1px solid #d1d1d6;border-radius:8px;font-size:15px;outline:none;resize:vertical;min-height:100px;font-family:inherit}
+.batch-input:focus{border-color:#ff6b6b}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>选题评分工具</h1>
+  <div class="sub">立信小狐 · 共 <span id="totalCount">0</span> 个选题</div>
+</div>
+
+<div class="content">
+  <div class="panel active" id="panelHome">
+    <div class="filter-bar" id="filterBar"></div>
+    <div id="topicList"></div>
+  </div>
+
+  <div class="panel" id="panelAdd">
+    <div class="card">
+      <div class="card-title">选题信息</div>
+      <div class="form-group">
+        <label>选题名称</label>
+        <input type="text" id="inputName" placeholder="例：在立信最想念的一道菜">
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">评分维度（1-3分）</div>
+      <div id="scoreSection"></div>
+    </div>
+    <div class="card">
+      <div class="card-title">发布平台</div>
+      <div class="platform-btns" id="platformBtns"></div>
+    </div>
+    <div class="card">
+      <div class="card-title">分类标签（可多选）</div>
+      <div class="tag-btns" id="tagBtns"></div>
+    </div>
+    <button class="btn-primary" onclick="submitTopic()" style="margin-top:8px">添加选题</button>
+  </div>
+
+  <div class="panel" id="panelStats">
+    <div class="stat-grid" id="statGrid"></div>
+    <div class="card">
+      <div class="card-title">等级分布</div>
+      <div class="grade-bar" id="gradeBar"></div>
+      <div id="gradeLabels" style="display:flex;justify-content:space-between;font-size:11px;color:#8e8e93;margin-top:4px"></div>
+    </div>
+    <div class="card">
+      <div class="card-title">各维度均分</div>
+      <div id="dimBars"></div>
+    </div>
+    <div class="card">
+      <div class="card-title">平台分布</div>
+      <div id="platformStats"></div>
+    </div>
+    <div class="card">
+      <div class="card-title">热门标签</div>
+      <div id="tagStats"></div>
+    </div>
+    <div class="card">
+      <div class="card-title">最佳选题</div>
+      <div id="bestTopic" style="font-size:16px;font-weight:600;text-align:center;padding:10px 0"></div>
+    </div>
+    <button class="btn-primary btn-secondary" onclick="exportCSV()" style="margin-top:8px">导出 CSV</button>
+  </div>
+
+  <div class="panel" id="panelBatch">
+    <div class="card">
+      <div class="card-title">批量添加</div>
+      <div class="form-group">
+        <label>选题名称（每行一个）</label>
+        <textarea class="batch-input" id="batchNames" placeholder="在立信最想念的一道菜&#10;立信图书馆占座攻略&#10;立信的夏天有多热"></textarea>
+      </div>
+      <div class="form-group">
+        <label>统一平台</label>
+        <div class="platform-btns" id="batchPlatform"></div>
+      </div>
+      <div class="form-group">
+        <label>统一标签</label>
+        <div class="tag-btns" id="batchTags"></div>
+      </div>
+    </div>
+    <button class="btn-primary" onclick="startBatchScore()">开始逐个评分</button>
+  </div>
+</div>
+
+<!-- 编辑弹窗 -->
+<div class="modal-overlay" id="editModal">
+  <div class="modal">
+    <div class="modal-close" onclick="closeModal()">&times;</div>
+    <div class="modal-title" id="editTitle">编辑选题</div>
+    <div class="form-group">
+      <label>选题名称</label>
+      <input type="text" id="editName">
+    </div>
+    <div id="editScoreSection"></div>
+    <div class="form-group">
+      <label>平台</label>
+      <div class="platform-btns" id="editPlatform"></div>
+    </div>
+    <div class="form-group">
+      <label>标签</label>
+      <div class="tag-btns" id="editTags"></div>
+    </div>
+    <button class="btn-primary" onclick="saveEdit()">保存修改</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<div class="tab-bar">
+  <div class="tab active" data-tab="Home" onclick="switchTab('Home')"><span class="icon"> </span>选题</div>
+  <div class="tab" data-tab="Add" onclick="switchTab('Add')"><span class="icon">➕</span>添加</div>
+  <div class="tab" data-tab="Stats" onclick="switchTab('Stats')"><span class="icon"> </span>统计</div>
+  <div class="tab" data-tab="Batch" onclick="switchTab('Batch')"><span class="icon"> </span>批量</div>
+</div>
+
+<script>
+const DIMS=[
+  {key:'search',label:'搜索需求',desc:'1=没人搜 2=偶尔搜 3=很多人搜'},
+  {key:'interaction',label:'互动潜力',desc:'1=看完就走 2=可能点赞 3=想评论转发'},
+  {key:'relevance',label:'立信关联',desc:'1=通用内容 2=跟立信沾边 3=只有立信人懂'},
+  {key:'material',label:'素材获取',desc:'1=很难找 2=需花时间 3=手边就有'},
+];
+const PLATS=['小红书','微信','双平台'];
+const TAGS=['攻略','互动','争议','日常','热点','合集','人设'];
+const SK='topic_scorer_data';
+let topics=[],editIdx=-1,curFilter={p:null,t:null};
+
+function load(){try{topics=JSON.parse(localStorage.getItem(SK))||[]}catch{topics=[]}topics.forEach(t=>{if(!t.platform)t.platform='双平台';if(!t.tags)t.tags=[]})}
+function save(){localStorage.setItem(SK,JSON.stringify(topics))}
+function getScore(s){return s>=10?'优先':s>=7?'值得':'放弃/改良'}
+function getSC(s){return s>=10?'s-priority':s>=7?'s-worth':'s-skip'}
+function esc(s){const d=document.createElement('div');d.textContent=s;return d.innerHTML}
+
+function toast(msg){const e=document.getElementById('toast');e.textContent=msg;e.classList.add('show');setTimeout(()=>e.classList.remove('show'),2000)}
+
+function switchTab(n){
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('panel'+n).classList.add('active');
+  document.querySelector(`.tab[data-tab="${n}"]`).classList.add('active');
+  if(n==='Home')renderList();if(n==='Stats')renderStats();
+}
+
+function createScoreBtns(id,sel={}){
+  const el=document.getElementById(id);el.innerHTML='';
+  DIMS.forEach(d=>{
+    const r=document.createElement('div');r.className='score-row';
+    r.innerHTML=`<div class="label">${d.label}<small>${d.desc}</small></div><div class="score-btns" data-key="${d.key}">${[1,2,3].map(n=>`<div class="btn ${sel[d.key]===n?'selected':''}" data-val="${n}" onclick="pickScore(this)">${n}</div>`).join('')}</div>`;
+    el.appendChild(r);
+  });
+}
+function pickScore(b){b.parentElement.querySelectorAll('.btn').forEach(x=>x.classList.remove('selected'));b.classList.add('selected')}
+
+function createPlatBtns(id,sel='双平台'){
+  const el=document.getElementById(id);el.innerHTML='';
+  PLATS.forEach(p=>{
+    const b=document.createElement('div');b.className=`btn ${p===sel?'selected':''}`;b.textContent=p;
+    b.onclick=()=>{el.querySelectorAll('.btn').forEach(x=>x.classList.remove('selected'));b.classList.add('selected')};el.appendChild(b);
+  });
+}
+function createTagBtns(id,sel=[]){
+  const el=document.getElementById(id);el.innerHTML='';
+  TAGS.forEach(t=>{
+    const b=document.createElement('div');b.className=`btn ${sel.includes(t)?'selected':''}`;b.textContent='#'+t;
+    b.onclick=()=>b.classList.toggle('selected');el.appendChild(b);
+  });
+}
+
+function getSel(id){return[...document.getElementById(id).querySelectorAll('.btn.selected')].map(b=>b.textContent.replace('#',''))}
+function getScores(id){const s={};document.getElementById(id).querySelectorAll('.score-btns').forEach(g=>{const b=g.querySelector('.btn.selected');s[g.dataset.key]=b?+b.dataset.val:1});return s}
+function getPlat(id){const b=document.querySelector(`#${id} .btn.selected`);return b?b.textContent:'双平台'}
+
+function submitTopic(){
+  const name=document.getElementById('inputName').value.trim();
+  if(!name){toast('名称不能为空');return}
+  if(topics.some(t=>t.name===name)){toast('已存在同名选题');return}
+  const scores=getScores('scoreSection'),platform=getPlat('platformBtns'),tags=getSel('tagBtns'),total=Object.values(scores).reduce((a,b)=>a+b,0);
+  topics.push({name,...scores,total,platform,tags,created:new Date().toISOString().slice(0,10)});
+  save();toast(`✅「${name}」已添加，${total}分 — ${getScore(total)}`);
+  document.getElementById('inputName').value='';createScoreBtns('scoreSection');createPlatBtns('platformBtns');createTagBtns('tagBtns');
+}
+
+function renderList(){
+  updateCount();updateFilterBar();const list=document.getElementById('topicList');
+  let f=[...topics];
+  if(curFilter.p)f=f.filter(t=>t.platform===curFilter.p);
+  if(curFilter.t)f=f.filter(t=>t.tags&&t.tags.includes(curFilter.t));
+  if(!f.length){list.innerHTML=`<div class="empty"><div class="icon"> </div><p>${topics.length?'没有符合条件的选题':'暂无选题，点击下方 ➕ 添加'}</p></div>`;return}
+  f.sort((a,b)=>b.total-a.total);
+  list.innerHTML=f.map(t=>{
+    const ri=topics.indexOf(t),sc=getSC(t.total),sg=getScore(t.total),sgC=t.total>=10?'':t.total>=7?' worth':' skip';
+    return`<div class="topic-item"><div class="topic-header"><div class="topic-name">${esc(t.name)}</div><div class="topic-score ${sc}">${t.total}</div></div><div class="topic-meta"><span class="badge badge-platform">${t.platform}</span><span class="badge badge-suggestion${sgC}">${sg}</span>${(t.tags||[]).map(g=>`<span class="badge badge-tag">#${g}</span>`).join('')}</div><div class="topic-dims"><span>搜索${t.search}</span><span>互动${t.interaction}</span><span>关联${t.relevance}</span><span>素材${t.material}</span></div><div class="topic-actions"><div class="btn" onclick="openEdit(${ri})">✏️ 编辑</div><div class="btn" onclick="delTopic(${ri})"> ️ 删除</div></div></div>`;
+  }).join('');
+}
+
+function updateFilterBar(){
+  const bar=document.getElementById('filterBar'),allP=[...new Set(topics.map(t=>t.platform))].filter(Boolean),allT=[...new Set(topics.flatMap(t=>t.tags||[]))].filter(Boolean);
+  let h=`<div class="chip ${!curFilter.p&&!curFilter.t?'active':''}" onclick="setF(null,null)">全部</div>`;
+  allP.forEach(p=>h+=`<div class="chip ${curFilter.p===p?'active':''}" onclick="setF('${p}',null)">${p}</div>`);
+  allT.forEach(t=>h+=`<div class="chip ${curFilter.t===t?'active':''}" onclick="setF(null,'${t}')">#${t}</div>`);
+  bar.innerHTML=h;
+}
+function setF(p,t){curFilter={p,t};renderList()}
+
+function delTopic(i){if(!confirm(`确认删除「${topics[i].name}」？`))return;topics.splice(i,1);save();renderList();toast('已删除')}
+
+function openEdit(i){
+  editIdx=i;const t=topics[i];
+  document.getElementById('editTitle').textContent='编辑「'+t.name+'」';
+  document.getElementById('editName').value=t.name;
+  createScoreBtns('editScoreSection',t);createPlatBtns('editPlatform',t.platform);createTagBtns('editTags',t.tags||[]);
+  document.getElementById('editModal').classList.add('show');
+}
+function closeModal(){document.getElementById('editModal').classList.remove('show');editIdx=-1}
+function saveEdit(){
+  if(window._batchSave)return window._batchSave();
+  if(editIdx<0)return;const t=topics[editIdx],name=document.getElementById('editName').value.trim();
+  if(!name){toast('名称不能为空');return}
+  const scores=getScores('editScoreSection'),total=Object.values(scores).reduce((a,b)=>a+b,0);
+  t.name=name;Object.assign(t,scores);t.total=total;t.platform=getPlat('editPlatform');t.tags=getSel('editTags');
+  save();closeModal();renderList();toast('已保存');
+}
+
+function renderStats(){
+  updateCount();if(!topics.length){document.getElementById('statGrid').innerHTML='<div class="empty" style="grid-column:1/-1"><div class="icon"> </div><p>暂无数据</p></div>';return}
+  const n=topics.length,totals=topics.map(t=>t.total),avg=(totals.reduce((a,b)=>a+b)/n).toFixed(1);
+  const pri=topics.filter(t=>t.total>=10).length,wrth=topics.filter(t=>t.total>=7&&t.total<10).length,skp=topics.filter(t=>t.total<7).length;
+  document.getElementById('statGrid').innerHTML=`<div class="stat-box"><div class="stat-num">${n}</div><div class="stat-label">总选题数</div></div><div class="stat-box"><div class="stat-num">${avg}</div><div class="stat-label">平均分</div></div><div class="stat-box"><div class="stat-num">${Math.max(...totals)}</div><div class="stat-label">最高分</div></div><div class="stat-box"><div class="stat-num">${Math.min(...totals)}</div><div class="stat-label">最低分</div></div>`;
+  const tt=pri+wrth+skp||1;
+  document.getElementById('gradeBar').innerHTML=`<div style="width:${pri/tt*100}%;background:#34c759">${pri||''}</div><div style="width:${wrth/tt*100}%;background:#ff9500">${wrth||''}</div><div style="width:${skp/tt*100}%;background:#ff3b30">${skp||''}</div>`;
+  document.getElementById('gradeLabels').innerHTML='<span>优先(10+)</span><span>值得(7-9)</span><span>放弃(<7)</span>';
+  const dc={search:'#007aff',interaction:'#ff9500',relevance:'#34c759',material:'#ff6b6b'};
+  document.getElementById('dimBars').innerHTML=DIMS.map(d=>{const a=(topics.reduce((s,t)=>s+t[d.key],0)/n).toFixed(1);return`<div class="stat-bar"><div class="name">${d.label}</div><div class="bar-wrap"><div class="bar-fill" style="width:${a/3*100}%;background:${dc[d.key]}"></div></div><div class="val">${a}</div></div>`}).join('');
+  const pc={};topics.forEach(t=>{pc[t.platform]=(pc[t.platform]||0)+1});
+  document.getElementById('platformStats').innerHTML=Object.entries(pc).map(([p,c])=>`<div class="stat-bar"><div class="name">${p}</div><div class="bar-wrap"><div class="bar-fill" style="width:${c/n*100}%;background:#007aff"></div></div><div class="val">${c}</div></div>`).join('');
+  const tc={};topics.forEach(t=>(t.tags||[]).forEach(g=>{tc[g]=(tc[g]||0)+1}));
+  const tt2=Object.entries(tc).sort((a,b)=>b[1]-a[1]).slice(0,5);
+  document.getElementById('tagStats').innerHTML=tt2.length?tt2.map(([t,c])=>`<div class="stat-bar"><div class="name">#${t}</div><div class="bar-wrap"><div class="bar-fill" style="width:${c/n*100}%;background:#ff9500"></div></div><div class="val">${c}</div></div>`).join(''):'<div style="color:#8e8e93;font-size:13px">暂无标签数据</div>';
+  const best=topics.reduce((a,b)=>a.total>b.total?a:b);
+  document.getElementById('bestTopic').innerHTML=`${esc(best.name)} <span style="color:#34c759">${best.total}分</span>`;
+}
+
+// 批量
+let batchQ=[];
+function initBatch(){createPlatBtns('batchPlatform');createTagBtns('batchTags')}
+function startBatchScore(){
+  const raw=document.getElementById('batchNames').value.trim();if(!raw){toast('请输入选题名称');return}
+  const names=raw.split('\n').map(s=>s.trim()).filter(Boolean),dupes=names.filter(n=>topics.some(t=>t.name===n)),news=names.filter(n=>!topics.some(t=>t.name===n));
+  if(dupes.length)toast(`跳过已存在：${dupes.join('、')}`);if(!news.length){toast('没有新选题');return}
+  batchQ=news.map(name=>({name,platform:getPlat('batchPlatform'),tags:getSel('batchTags')}));scoreNext();
+}
+function scoreNext(){
+  if(!batchQ.length){save();toast('✅ 批量添加完成');switchTab('Home');return}
+  const item=batchQ[0];
+  document.getElementById('editTitle').textContent=`评分：${item.name}（剩余 ${batchQ.length} 个）`;
+  document.getElementById('editName').value=item.name;
+  createScoreBtns('editScoreSection');createPlatBtns('editPlatform',item.platform);createTagBtns('editTags',item.tags);
+  document.getElementById('editModal').classList.add('show');
+  window._batchSave=()=>{
+    const scores=getScores('editScoreSection'),total=Object.values(scores).reduce((a,b)=>a+b,0);
+    topics.push({name:item.name,...scores,total,platform:getPlat('editPlatform'),tags:getSel('editTags'),created:new Date().toISOString().slice(0,10)});
+    batchQ.shift();closeModal();window._batchSave=null;scoreNext();
+  };
+}
+
+function exportCSV(){
+  if(!topics.length){toast('暂无数据');return}
+  const sorted=[...topics].sort((a,b)=>b.total-a.total);
+  const h=['选题','搜索需求','互动潜力','立信关联','素材获取','总分','建议','平台','标签'];
+  const rows=sorted.map(t=>[t.name,t.search,t.interaction,t.relevance,t.material,t.total,getScore(t.total),t.platform,(t.tags||[]).join(' ')]);
+  const csv='﻿'+[h,...rows].map(r=>r.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);a.download=`topic_scores_${new Date().toISOString().slice(0,10)}.csv`;a.click();toast('✅ CSV 已下载');
+}
+function updateCount(){document.getElementById('totalCount').textContent=topics.length}
+
+load();createScoreBtns('scoreSection');createPlatBtns('platformBtns');createTagBtns('tagBtns');initBatch();renderList();
+</script>
+</body>
+</html>
