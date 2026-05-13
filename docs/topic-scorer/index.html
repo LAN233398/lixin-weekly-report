@@ -100,8 +100,15 @@ body{font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;backgr
       <div class="card-title">选题信息</div>
       <div class="form-group">
         <label>选题名称</label>
-        <input type="text" id="inputName" placeholder="例：在立信最想念的一道菜">
+        <div style="display:flex;gap:8px">
+          <input type="text" id="inputName" placeholder="例：在立信最想念的一道菜" style="flex:1">
+          <button class="btn-primary" onclick="doAutoScore()" style="width:auto;padding:10px 14px;font-size:14px;white-space:nowrap">智能评分</button>
+        </div>
       </div>
+    </div>
+    <div class="card" id="reasonCard" style="display:none">
+      <div class="card-title" style="color:#ff6b6b">AI 评分理由</div>
+      <div id="reasonText" style="font-size:13px;color:#555;line-height:1.7"></div>
     </div>
     <div class="card">
       <div class="card-title">评分维度（1-3分）</div>
@@ -233,6 +240,80 @@ function createScoreBtns(id,sel={search:2,interaction:2,relevance:2,material:2})
 }
 function pickScore(b){b.parentElement.querySelectorAll('.btn').forEach(x=>x.classList.remove('selected'));b.classList.add('selected')}
 
+// ─── 智能评分 ───
+function autoScore(name){
+  let search=2,interaction=2,relevance=2,material=2;
+  const reasons=[];
+
+  // 搜索需求
+  if(/攻略|指南|怎么|如何|哪里|推荐|避坑|红榜|黑榜|必备|清单|合集/.test(name)){search=3;reasons.push('搜索需求 3：攻略/指南类搜索量大')}
+  else if(/老师|课|食堂|外卖|宿舍|图书馆|专业|选课|快递/.test(name)){search=3;reasons.push('搜索需求 3：校园高频搜索词')}
+  else if(/什么|在哪|几点|哪个|多少|几年/.test(name)){search=2;reasons.push('搜索需求 2：疑问句，有人搜但不算高频')}
+  else if(/感受|感悟|崩溃|瞬间|心情|怀念|重来|如果/.test(name)){search=1;reasons.push('搜索需求 1：情感向内容，很少有人主动搜')}
+  else if(/焦虑|迷茫|压力|后悔|真的/.test(name)){search=1;reasons.push('搜索需求 1：情绪向，搜索需求弱')}
+  else{reasons.push('搜索需求 2：中等搜索潜力')}
+
+  // 互动潜力
+  if(/最.*雷|最.*差|最.*坑|最.*烂|吐槽|避雷|受不了|崩溃|无语/.test(name)){interaction=3;reasons.push('互动潜力 3：争议吐槽，评论区必然爆炸')}
+  else if(/最好吃|最喜欢|最推荐|最想念|最值得|最爱/.test(name)){interaction=3;reasons.push('互动潜力 3：「最X」征集类，引发分享欲')}
+  else if(/红榜|黑榜|合集|排名|榜|TOP|top/.test(name)){interaction=3;reasons.push('互动潜力 3：榜单类自带争议，评论区会补充')}
+  else if(/投票|你会|你会不会|要不要|选择/.test(name)){interaction=3;reasons.push('互动潜力 3：选择类选题天然适合投票互动')}
+  else if(/合集|攻略|清单|汇总|整理/.test(name)){interaction=2;reasons.push('互动潜力 2：实用内容，可能收藏转发')}
+  else if(/感受|感悟|随笔|记录/.test(name)){interaction=1;reasons.push('互动潜力 1：个人感受类，互动偏低')}
+  else{reasons.push('互动潜力 2：中等互动潜力')}
+
+  // 立信关联
+  if(/立信/.test(name)){relevance=3;reasons.push('立信关联 3：标题直接带「立信」')}
+  else if(/学姐|学长|同学|学校|校园|宿舍|食堂|图书馆|图书馆|快递|选课|教务/.test(name)){relevance=3;reasons.push('立信关联 3：校园场景，只有立信人懂')}
+  else if(/上海|浦东|惠南|航头|金融/.test(name)){relevance=2;reasons.push('立信关联 2：地域相关，跟立信沾边')}
+  else{reasons.push('立信关联 2：隐含校园语境')}
+
+  // 素材获取
+  if(/合集|汇总|整理|盘点|榜单|红榜|排名/.test(name)){material=3;reasons.push('素材获取 3：合集类，素材好收集')}
+  else if(/外卖|美食|食堂|奶茶|咖啡|周边|探店/.test(name)){material=3;reasons.push('素材获取 3：美食/周边类，素材现成')}
+  else if(/投票|你会|选择|哪个更好/.test(name)){material=3;reasons.push('素材获取 3：投票类，不需要额外素材')}
+  else if(/攻略|指南|推荐|避坑/.test(name)){material=2;reasons.push('素材获取 2：攻略需要花时间整理')}
+  else if(/感悟|感受|经历|故事|崩溃|瞬间/.test(name)){material=2;reasons.push('素材获取 2：经历类需要征集或自己写')}
+  else if(/采访|调查|数据|统计/.test(name)){material=1;reasons.push('素材获取 1：需要调研收集，难度大')}
+  else{reasons.push('素材获取 2：中等素材获取难度')}
+
+  // 平台推荐
+  let platform='双平台';
+  if(/攻略|指南|避坑|推荐|合集|清单/.test(name)){platform='小红书';reasons.push('平台→小红书：攻略类在小红书搜索流量大')}
+  else if(/吐槽|争议|最雷|投票|你会/.test(name)){platform='微信';reasons.push('平台→微信：互动争议类适合朋友圈引爆')}
+  else{reasons.push('平台→双平台：适合两个平台同步发布')}
+
+  // 标签推荐
+  const tags=[];
+  if(/攻略|指南|推荐|避坑|必备|清单/.test(name))tags.push('攻略');
+  if(/投票|你会|选择|征集|评论区/.test(name))tags.push('互动');
+  if(/最.*雷|吐槽|争议|最.*差|最.*坑/.test(name))tags.push('争议');
+  if(/日常|今天|每天|随手|记录/.test(name))tags.push('日常');
+  if(/热点|新闻|通知|政策|规定|新规/.test(name))tags.push('热点');
+  if(/合集|汇总|整理|盘点|榜/.test(name))tags.push('合集');
+  if(/学姐|学长|小狐|学姐说/.test(name))tags.push('人设');
+  if(!tags.length)tags.push('日常');
+
+  const total=search+interaction+relevance+material;
+  return{search,interaction,relevance,material,total,platform,tags,reasons};
+}
+
+function doAutoScore(){
+  const name=document.getElementById('inputName').value.trim();
+  if(!name){toast('请先输入选题名称');return}
+  const r=autoScore(name);
+  // 填充分数
+  createScoreBtns('scoreSection',r);
+  // 填充平台
+  createPlatBtns('platformBtns',r.platform);
+  // 填充标签
+  createTagBtns('tagBtns',r.tags);
+  // 显示理由
+  document.getElementById('reasonCard').style.display='block';
+  document.getElementById('reasonText').innerHTML=r.reasons.map(x=>'<div style="margin-bottom:4px">• '+x+'</div>').join('');
+  toast(`智能评分完成：${r.total}分 — ${getScore(r.total)}`);
+}
+
 function createPlatBtns(id,sel='双平台'){
   const el=document.getElementById(id);el.innerHTML='';
   PLATS.forEach(p=>{
@@ -334,9 +415,10 @@ function startBatchScore(){
 function scoreNext(){
   if(!batchQ.length){save();toast('✅ 批量添加完成');switchTab('Home');return}
   const item=batchQ[0];
+  const r=autoScore(item.name);
   document.getElementById('editTitle').textContent=`评分：${item.name}（剩余 ${batchQ.length} 个）`;
   document.getElementById('editName').value=item.name;
-  createScoreBtns('editScoreSection');createPlatBtns('editPlatform',item.platform);createTagBtns('editTags',item.tags);
+  createScoreBtns('editScoreSection',r);createPlatBtns('editPlatform',r.platform);createTagBtns('editTags',r.tags);
   document.getElementById('editModal').classList.add('show');
   window._batchSave=()=>{
     const scores=getScores('editScoreSection'),total=Object.values(scores).reduce((a,b)=>a+b,0);
